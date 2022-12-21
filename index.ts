@@ -3,8 +3,8 @@ import puppeteer, { Browser } from "puppeteer-core";
 import PuppeteerHar from "puppeteer-har";
 
 import settings_ from "./settings.js";
-import { WaitGroup } from "./WaitGroup.js";
-import { settingsSchema } from "./settingsSchema.js";
+import { WaitGroup } from "./src/WaitGroup.js";
+import { settingsSchema } from "./src/settingsSchema.js";
 
 const settings = settingsSchema.parse(settings_);
 console.log(settings);
