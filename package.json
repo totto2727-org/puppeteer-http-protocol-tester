@@ -12,7 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "puppeteer-core": "^19.4.0",
-    "puppeteer-har": "^1.1.2"
+    "puppeteer-har": "^1.1.2",
+    "zod": "^3.20.2"
   },
   "devDependencies": {
     "@types/node": "^18.11.15",
