@@ -28,12 +28,6 @@ console.info(url);
 await runTests();
 
 async function runTests(): Promise<void> {
-  try {
-    await fs.rm(LOG_DIR, { recursive: true });
-  } catch (e) {
-    console.log(e);
-  }
-
   for (const protocol of HTTP_PROTOCOLS) {
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });

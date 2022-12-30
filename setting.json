@@ -1,7 +1,7 @@
 {
   "env": {
     "BASE_DOMAIN": "quic.totto.page",
-    "LOG_DIR": "./log",
+    "LOG_DIR": "~/log",
     "CHROMIUM_PATH": "/usr/bin/google-chrome"
   },
   "test": {
