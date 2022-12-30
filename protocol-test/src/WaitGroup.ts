@@ -1,51 +1,50 @@
 export type WaitGroupConstructorParameter = { waitIntervalMilli?: number };
 
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export class WaitGroup {
-    waitNumber = 0;
-    waitIntervalMilli = 10;
+  waitNumber = 0;
+  waitIntervalMilli = 10;
 
-    constructor(parameter?: WaitGroupConstructorParameter) {
-        if (parameter?.waitIntervalMilli) {
-            this.setWaitInterval(parameter.waitIntervalMilli);
-        }
+  constructor(parameter?: WaitGroupConstructorParameter) {
+    if (parameter?.waitIntervalMilli) {
+      this.setWaitInterval(parameter.waitIntervalMilli);
     }
+  }
 
-    add() {
-        this.setWaitNumber(this.waitNumber + 1);
-    }
+  add() {
+    this.setWaitNumber(this.waitNumber + 1);
+  }
 
-    done() {
-        this.setWaitNumber(this.waitNumber - 1);
-    }
+  done() {
+    this.setWaitNumber(this.waitNumber - 1);
+  }
 
-    async wait(max = 1) {
-        if (max < 1) {
-            Error("1以上の値を設定してください");
-        }
-        while (this.waitNumber > max - 1) {
-            await this.sleep(this.waitIntervalMilli);
-        }
+  async wait(max = 1) {
+    if (max < 1) {
+      Error("1以上の値を設定してください");
     }
+    while (this.waitNumber > max - 1) {
+      await sleep(this.waitIntervalMilli);
+    }
+  }
 
-    getWaitNumber() {
-        return this.waitNumber;
+  getWaitNumber() {
+    return this.waitNumber;
+  }
+  setWaitNumber(value: number) {
+    if (value < 0) {
+      throw Error("すでに全ての処理が終了しています");
     }
-    setWaitNumber(value: number) {
-        if (value < 0) {
-            throw Error("すでに全ての処理が終了しています");
-        }
-        this.waitNumber = value;
-    }
+    this.waitNumber = value;
+  }
 
-    setWaitInterval(value: number) {
-        if (value < 1) {
-            throw Error("1以上の値を設定してください(単位ms)");
-        }
-        this.waitIntervalMilli = value;
+  setWaitInterval(value: number) {
+    if (value < 1) {
+      throw Error("1以上の値を設定してください(単位ms)");
     }
-
-    sleep(ms: number) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-    }
+    this.waitIntervalMilli = value;
+  }
 }
 

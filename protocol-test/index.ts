@@ -1,23 +1,33 @@
 import * as fs from "fs/promises";
 import puppeteer, { Browser } from "puppeteer-core";
 import PuppeteerHar from "puppeteer-har";
+import * as path from "path";
 
-import setting_ from "../setting.json" assert { type: "json" };
-import { WaitGroup } from "./src/WaitGroup.js";
-import { settingsSchema } from "./src/settingsSchema.js";
+import setting from "../setting.json" assert { type: "json" };
+import { sleep, WaitGroup } from "./src/WaitGroup.js";
 
-const settings = settingsSchema.parse(setting_);
-console.log(settings);
+const { env, test } = setting;
+const { BASE_DOMAIN, CHROMIUM_PATH, LOG_DIR: LOG_DIR_ } = env;
+const {
+  DELAY,
+  TEST_INTERVAL,
+  HTTP_PROTOCOLS,
+  MAX_CONCURRENT,
+  REQUEST_TIMES,
+  TIMEOUT,
+} = test;
 
-const { env, test } = settings;
-const { BASE_DOMAIN, CHROMIUM_PATH, LOG_DIR } = env;
-const { DELAY, HTTP_PROTOCOLS, MAX_CONCURRENT, REQUEST_TIMES, TIMEOUT } = test;
+const LOG_DIR = path.isAbsolute(LOG_DIR_)
+  ? LOG_DIR_
+  : path.resolve(path.join("..", LOG_DIR_));
+console.info(LOG_DIR);
 
 const url = "https://" + BASE_DOMAIN;
+console.info(url);
 
 await runTests();
 
-async function runTests() {
+async function runTests(): Promise<void> {
   try {
     await fs.rm(LOG_DIR, { recursive: true });
   } catch (e) {
@@ -58,6 +68,8 @@ async function runTests() {
     await wg.wait();
 
     await browser.close();
+
+    await sleep(TEST_INTERVAL);
   }
 }
 
