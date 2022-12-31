@@ -1,0 +1,12 @@
+{
+	auto_https off
+	servers {
+		protocols h3
+	}
+}
+
+quic.totto.page {
+	tls {$HOME}/certs/quic.totto.page/fullchain.pem {$HOME}/certs/quic.totto.page/privkey.pem
+	root * {$HOME}/dotfiles/static/quic/html/
+	file_server
+}

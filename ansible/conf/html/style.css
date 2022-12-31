@@ -1,0 +1,4 @@
+@charset "utf-8";
+p { /* 段落の一文字目を字下げする */
+       text-indent: 1em;
+}
