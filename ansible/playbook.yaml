@@ -1,0 +1,21 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Clone repository
+      git:
+        repo: git@github.com:totto2727-org/puppeteer-http-protocol-tester.git
+        dest: "{{ home_dir }}/puppeteer-http-protocol-tester"
+        clone: true
+        update: true
+
+- hosts: client
+  gather_facts: false
+  become: true
+  tasks:
+    - import_tasks: client.tasks.yaml
+
+- hosts: server
+  gather_facts: false
+  become: true
+  tasks:
+    - import_tasks: server.tasks.yaml

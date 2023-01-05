@@ -1,0 +1,10 @@
+all:
+  vars:
+    home_dir: /home/totto2727
+  children:
+    client:
+      hosts:
+        bws03:
+    server:
+      hosts:
+        minis:
