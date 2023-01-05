@@ -89,14 +89,14 @@ async function runTest(
 async function newPage(browser: Browser) {
   const context = await browser.createIncognitoBrowserContext();
   const page = await context.newPage();
-  page.setDefaultNavigationTimeout(0);
-  page.setDefaultTimeout(0)
+  page.setDefaultNavigationTimeout(TIMEOUT);
+  page.setDefaultTimeout(TIMEOUT)
 
   const getHar = new PuppeteerHar(page);
   await getHar.start();
 
   try {
-    await page.goto(url, {waitUntil: 'load', timeout: 0});
+    await page.goto(url, {waitUntil: 'load', timeout: TIMEOUT});
   } catch (e) {
     console.error(e);
   }
