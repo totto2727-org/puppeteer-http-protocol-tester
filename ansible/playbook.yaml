@@ -36,7 +36,7 @@
 
 - hosts: server
   gather_facts: false
-  become: false
+  become: true
   tasks:
     - name: mkdir quic
       file:

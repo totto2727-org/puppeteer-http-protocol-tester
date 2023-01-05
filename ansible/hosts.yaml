@@ -1,6 +1,7 @@
 all:
   vars:
     home_dir: /home/totto2727
+    ansible_ssh_user: totto2727
   children:
     client:
       hosts:
