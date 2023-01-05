@@ -18,4 +18,96 @@
   gather_facts: false
   become: true
   tasks:
-    - import_tasks: server.tasks.yaml
+    - name: install packages
+      apt:
+        state: latest
+        update_cache: true
+        name:
+          - mercurial
+          - ninja-build
+          - autoconf
+          - automake
+          - autotools-dev
+          - libtool
+          - pkg-config
+          - libpcre3
+          - libpcre3-dev
+          - zlib1g-dev
+
+- hosts: server
+  gather_facts: false
+  become: false
+  tasks:
+    - name: mkdir quic
+      file:
+        path: "{{ home_dir }}/quic"
+        owner: totto2727
+        group: totto2727
+        mode: u=rwX,g=rX,o=rX
+        recurse: yes
+        state: directory
+
+    - name: clone OpenSSL
+      git:
+        repo: https://github.com/quictls/openssl
+        dest: "{{ home_dir }}/quic/openssl"
+        version: OpenSSL_1_1_1q+quic
+        depth: 1
+        force: true
+        
+    - name: build openssl
+      shell:
+        chdir: "{{ home_dir }}/quic/openssl"
+        cmd: |
+          ./config --prefix="$PWD"/build --openssldir=/etc/ssl
+          make -j"$(nproc)"
+          make install_sw
+
+    - name: clone nginx-quic
+      community.general.hg:
+        repo: https://hg.nginx.org/nginx-quic
+        dest: "{{ home_dir }}/quic/nginx-quic"
+        revision: quic
+        update: true
+        force: true
+
+    - name: build nginx
+      shell:
+        chdir: "{{ home_dir }}/quic/nginx-quic"
+        cmd: |
+          ./auto/configure \
+          --prefix="$PWD/build" \
+          --with-debug \
+          --with-http_v2_module \
+          --with-http_v3_module \
+          --with-stream \
+          --with-stream_quic_module \
+          --with-http_ssl_module \
+          --with-cc-opt="-I../openssl/build/include" \
+          --with-ld-opt="-L../openssl/build/lib"
+          make -j"$(nproc)"
+          make install
+
+- hosts: server
+  gather_facts: false
+  become: true
+  tasks:
+    - name: delete html
+      file:
+        path: "{{ home_dir }}/quic/nginx-quic/build/html"
+        state: absent
+
+    - name: link quic
+      file:        
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        state: link
+        force: true
+      loop:
+        - dest: "{{ home_dir }}/quic/nginx-quic/build/conf/nginx.conf"
+          src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/qnginx.conf"
+        - dest: "{{ home_dir }}/quic/nginx-quic/build/html"
+          src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/html"
+        - dest: /lib/systemd/system.qnginx.service
+          src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/qnginx.service"
+

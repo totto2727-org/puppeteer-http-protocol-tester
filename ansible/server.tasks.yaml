@@ -18,6 +18,8 @@
   file:
     path: "{{ home_dir }}/quic"
     mode: 755
+    owner: totto2727
+    group: totto2727
     state: directory
 
 - name: clone OpenSSL
@@ -70,7 +72,7 @@
   loop:
     - dest: "{{ home_dir }}/quic/nginx-quic/build/conf/nginx.conf"
       src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/qnginx.conf"
-    - dest: "{{ home_dir }}/quic/nginx-quic/build/conf/html"
+    - dest: "{{ home_dir }}/quic/nginx-quic/build/html"
       src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/html"
     - dest: /lib/systemd/system.qnginx.service
       src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/qnginx.service"

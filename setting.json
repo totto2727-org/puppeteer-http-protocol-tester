@@ -6,10 +6,10 @@
   },
   "test": {
     "HTTP_PROTOCOLS": ["h2", "h3"],
-    "TIMEOUT": 5000,
+    "TIMEOUT": 10000,
     "DELAY": 10,
     "TEST_INTERVAL": 5000,
     "REQUEST_TIMES": 100,
-    "MAX_CONCURRENT": 20
+    "MAX_CONCURRENT": 10
   }
 }
