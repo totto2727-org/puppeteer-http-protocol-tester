@@ -72,9 +72,9 @@ async function runTest(
   browser: Browser,
   logDir: string,
   protocol: string,
-  n = 0,
+  n: number,
 ) {
-  const { har, performances } = await newPage(browser);
+  const { har, performances } = await newPage(browser, n);
   wg.done();
   await fs.writeFile(
     `${logDir}/${protocol}-har/${n}.json`,
@@ -86,19 +86,19 @@ async function runTest(
   );
 }
 
-async function newPage(browser: Browser) {
+async function newPage(browser: Browser, n: number) {
   const context = await browser.createIncognitoBrowserContext();
   const page = await context.newPage();
   page.setDefaultNavigationTimeout(TIMEOUT);
-  page.setDefaultTimeout(TIMEOUT)
+  page.setDefaultTimeout(TIMEOUT);
 
   const getHar = new PuppeteerHar(page);
   await getHar.start();
 
   try {
-    await page.goto(url, {waitUntil: 'load', timeout: TIMEOUT});
+    await page.goto(url, { waitUntil: "load", timeout: TIMEOUT });
   } catch (e) {
-    console.error(e);
+    console.error(`${n} ${JSON.stringify(e)}`);
   }
 
   const performances = JSON.parse(
