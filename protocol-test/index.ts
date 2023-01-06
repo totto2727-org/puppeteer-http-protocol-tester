@@ -29,7 +29,11 @@ await runTests();
 
 async function runTests(): Promise<void> {
   for (const protocol of HTTP_PROTOCOLS) {
+
+    await fs.rm(`${LOG_DIR}/${protocol}-har`, { recursive: true });
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
+
+    await fs.rm(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
 
     const args = [
