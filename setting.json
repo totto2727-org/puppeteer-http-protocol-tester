@@ -10,6 +10,6 @@
     "DELAY": 10,
     "TEST_INTERVAL": 5000,
     "REQUEST_TIMES": 1000,
-    "MAX_CONCURRENT": 20
+    "MAX_CONCURRENT": 3
   }
 }
