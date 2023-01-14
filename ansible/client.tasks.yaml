@@ -11,7 +11,7 @@
     repo: deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
-- name: Install google-chrome-stable
+- name: install google-chrome-stable
   ansible.builtin.apt:
     name: "google-chrome-stable"
     state: latest

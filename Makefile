@@ -8,8 +8,9 @@ test:
 	ssh bws03 -t "cd ${SSH_BASE_DIR}/protocol-test && bash -i -c 'npm start'"
 
 preprocessing: mkdir-log
+	#rsync -av -z -P –-exclude '*netlog.json' bws03:${SSH_BASE_DIR}/$$(basename ${LOG_DIR})/ ${LOG_DIR}
+	rsync -av -z -P --exclude '*netlog.json' bws03:/home/totto2727/puppeteer-http-protocol-tester/log/ log
 	scp ubnt:~/log/ubnt.csv ${LOG_DIR}
-	rsync -av -z -P bws03:${SSH_BASE_DIR}/$$(basename ${LOG_DIR})/ ${LOG_DIR}
 
 	find ${LOG_DIR}/h2-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h2-har.json
 	find ${LOG_DIR}/h3-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h3-har.json

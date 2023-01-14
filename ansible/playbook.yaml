@@ -23,6 +23,7 @@
         state: latest
         update_cache: true
         name:
+          - make
           - mercurial
           - ninja-build
           - autoconf
@@ -92,6 +93,23 @@
   gather_facts: false
   become: true
   tasks:
+    - name: mkdir certs
+      file:
+        path: "{{ home_dir }}/quic"
+        owner: totto2727
+        group: totto2727
+        mode: u=rwX,g=rX,o=rX
+        recurse: yes
+        state: directory
+    - name: copy certs
+      copy:
+        src: ~/certs/
+        dest: "{{ home_dir }}/certs/"
+        owner: totto2727
+        group: totto2727
+        mode: u=rwX,g=rX,o=rX
+        force: true
+
     - name: delete html
       file:
         path: "{{ home_dir }}/quic/nginx-quic/build/html"
@@ -108,6 +126,15 @@
           src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/qnginx.conf"
         - dest: "{{ home_dir }}/quic/nginx-quic/build/html"
           src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/html"
-        - dest: /lib/systemd/system.qnginx.service
+        - dest: /lib/systemd/system/qnginx.service
           src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/qnginx.service"
 
+    - name: daemon reload
+      systemd:
+        daemon_reload: true
+
+    - name: restart nginx
+      systemd:
+        name: qnginx.service
+        state: started
+        enabled: true

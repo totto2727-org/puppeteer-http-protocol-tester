@@ -5,7 +5,9 @@ all:
   children:
     client:
       hosts:
-        bws03:
+        minis1:
     server:
       hosts:
-        minis:
+        minis2:
+        nuc1:
+        nuc2:
