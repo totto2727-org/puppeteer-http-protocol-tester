@@ -111,6 +111,7 @@
         mode: u=rwX,g=rX,o=rX
         recurse: yes
         state: directory
+
     - name: copy certs
       copy:
         src: ~/certs/

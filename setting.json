@@ -1,10 +1,14 @@
 {
   "env": {
     "BASE_DOMAIN": "quic.totto.page",
-    "CHROMIUM_PATH": "/usr/bin/google-chrome"
+    "CHROMIUM_PATH": "/usr/bin/google-chrome",
+    "LOG_DIR": "./log"
   },
   "test": {
-    "HTTP_PROTOCOLS": ["h2", "h3"],
+    "HTTP_PROTOCOLS": [
+      "h2",
+      "h3"
+    ],
     "TIMEOUT": 10000,
     "DELAY": 10,
     "TEST_INTERVAL": 5000,
