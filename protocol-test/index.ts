@@ -99,6 +99,8 @@ async function newPage(browser: Browser, n: number) {
   page.setDefaultNavigationTimeout(TIMEOUT);
   page.setDefaultTimeout(TIMEOUT);
 
+  await sleep(3000);
+
   const getHar = new PuppeteerHar(page);
   await getHar.start();
 
@@ -123,6 +125,8 @@ async function newPage(browser: Browser, n: number) {
   const har = await getHar.stop();
 
   await page.close();
+
+  await sleep(3000)
 
   return {
     har,
