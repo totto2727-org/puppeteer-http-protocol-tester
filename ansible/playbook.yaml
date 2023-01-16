@@ -113,13 +113,11 @@
         state: directory
 
     - name: copy certs
-      copy:
+      synchronize:
         src: ~/certs/
         dest: "{{ home_dir }}/certs/"
-        owner: totto2727
-        group: totto2727
-        mode: u=rwX,g=rX,o=rX
-        force: true
+        owner: false
+        group: false
 
     - name: delete html
       file:
@@ -147,5 +145,5 @@
     - name: restart nginx
       systemd:
         name: qnginx.service
-        state: started
+        state: restarted
         enabled: true
