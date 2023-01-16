@@ -7,6 +7,16 @@
         dest: "{{ home_dir }}/puppeteer-http-protocol-tester"
         clone: true
         update: true
+- hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: install share packages
+      apt:
+        state: latest
+        update_cache: true
+        name:
+          - sysstat
 
 - hosts: client
   gather_facts: false

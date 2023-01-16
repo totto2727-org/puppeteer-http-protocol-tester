@@ -4,12 +4,12 @@ LOG_DIR := $(shell cat ./setting.json | jq -r ".env.LOG_DIR")
 SSH_BASE_DIR := puppeteer-http-protocol-tester
 
 test:
-	-ssh bws03 -t "rm -r log"
-	ssh bws03 -t "cd ${SSH_BASE_DIR}/protocol-test && bash -i -c 'npm start'"
+	-ssh minis1 -t "rm -r log"
+	ssh minis1 -t "cd ${SSH_BASE_DIR}/protocol-test && bash -i -c 'npm i && npm start'"
 
 preprocessing: mkdir-log
 	#rsync -av -z -P –-exclude '*netlog.json' bws03:${SSH_BASE_DIR}/$$(basename ${LOG_DIR})/ ${LOG_DIR}
-	rsync -av -z -P --exclude '*netlog.json' bws03:/home/totto2727/puppeteer-http-protocol-tester/log/ log
+	rsync -av -z -P --exclude '*netlog.json' minis1:/home/totto2727/puppeteer-http-protocol-tester/log/ log
 	scp ubnt:~/log/ubnt.csv ${LOG_DIR}
 
 	find ${LOG_DIR}/h2-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h2-har.json
@@ -29,10 +29,10 @@ mkdir-log:
 	mkdir -p ${LOG_DIR}
 
 stat-chrome: mkdir-log
-	ssh bws03 pidstat -h -H -C chrome 1 | tee ${LOG_DIR}/chrome.pidstat
+	ssh minis1 pidstat -h -H -C chrome 1 | tee ${LOG_DIR}/chrome.pidstat
 
-stat-nginx-bws03: mkdir-log
-	ssh minis pidstat -h -H -C nginx 1 | tee ${LOG_DIR}/nginx-bws03.pidstat
+stat-nginx-minis2: mkdir-log
+	ssh minis2 pidstat -h -H -C nginx 1 | tee ${LOG_DIR}/nginx-bws03.pidstat
 
 scp-ubnt:
 	scp stat/watch-stat.sh stat/stat-conntrack.sh ubnt:~/
