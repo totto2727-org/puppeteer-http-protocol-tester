@@ -6,7 +6,6 @@
   },
   "test": {
     "HTTP_PROTOCOLS": [
-      "h2",
       "h3"
     ],
     "TIMEOUT": 10000,
