@@ -1,6 +1,6 @@
 {
   "env": {
-    "BASE_DOMAIN": "site.totto.page",
+    "BASE_DOMAIN": "www.google.com",
     "CHROMIUM_PATH": "/usr/bin/google-chrome",
     "LOG_DIR": "./log"
   },
