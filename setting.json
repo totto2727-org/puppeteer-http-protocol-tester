@@ -12,7 +12,7 @@
     "TIMEOUT": 10000,
     "DELAY": 10,
     "TEST_INTERVAL": 10000,
-    "REQUEST_TIMES": 100,
+    "REQUEST_TIMES": 1000,
     "MAX_CONCURRENT": 1
   }
 }
