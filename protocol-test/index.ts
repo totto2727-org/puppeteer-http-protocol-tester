@@ -31,12 +31,12 @@ async function runTests(): Promise<void> {
   for (const protocol of HTTP_PROTOCOLS) {
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-har`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
 
     const args = [
@@ -98,6 +98,14 @@ async function newPage(browser: Browser, n: number) {
   const page = await context.newPage();
   page.setDefaultNavigationTimeout(TIMEOUT);
   page.setDefaultTimeout(TIMEOUT);
+
+  const client = await page.target().createCDPSession();
+  await client.send("Network.emulateNetworkConditions", {
+    offline: false,
+    latency: 20,
+    downloadThroughput: 10 * 1024 * 1024 / 8,
+    uploadThroughput: 10 * 1024 * 1024 / 8,
+  });
 
   const getHar = new PuppeteerHar(page);
   await getHar.start();
