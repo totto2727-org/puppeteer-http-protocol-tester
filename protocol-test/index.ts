@@ -7,7 +7,7 @@ import setting from "../setting.json" assert { type: "json" };
 import { sleep, WaitGroup } from "./src/WaitGroup.js";
 
 const { env, test } = setting;
-const { BASE_DOMAIN, CHROMIUM_PATH, LOG_DIR: LOG_DIR_ } = env;
+const { BASE_DOMAIN, PATH, CHROMIUM_PATH, LOG_DIR: LOG_DIR_ } = env;
 const {
   DELAY,
   TEST_INTERVAL,
@@ -22,7 +22,7 @@ const LOG_DIR = path.isAbsolute(LOG_DIR_)
   : path.resolve(path.join("..", LOG_DIR_));
 console.info(LOG_DIR);
 
-const url = "https://" + BASE_DOMAIN;
+const url = "https://" + BASE_DOMAIN + "+" + PATH;
 console.info(url);
 
 await runTests();
@@ -31,12 +31,12 @@ async function runTests(): Promise<void> {
   for (const protocol of HTTP_PROTOCOLS) {
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-har`, { recursive: true });
-    } catch {}
+    } catch { }
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
-    } catch {}
+    } catch { }
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
 
     const args = [
