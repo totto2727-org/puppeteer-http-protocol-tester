@@ -1,5 +1,6 @@
-- hosts: all
+- hosts: server
   gather_facts: false
+  become: true
   tasks:
     - name: Clone repository
       git:
@@ -7,32 +8,13 @@
         dest: "{{ home_dir }}/puppeteer-http-protocol-tester"
         clone: true
         update: true
-- hosts: all
-  gather_facts: false
-  become: true
-  tasks:
-    - name: install share packages
-      apt:
-        state: latest
-        update_cache: true
-        name:
-          - sysstat
 
-- hosts: client
-  gather_facts: false
-  become: true
-  tasks:
-    - import_tasks: client.tasks.yaml
-
-- hosts: server
-  gather_facts: false
-  become: true
-  tasks:
     - name: install packages
       apt:
         state: latest
         update_cache: true
         name:
+          - sysstat
           - make
           - mercurial
           - ninja-build
@@ -45,10 +27,6 @@
           - libpcre3-dev
           - zlib1g-dev
 
-- hosts: server
-  gather_facts: false
-  become: true
-  tasks:
     - name: mkdir quic
       file:
         path: "{{ home_dir }}/quic"
@@ -99,10 +77,6 @@
           make -j"$(nproc)"
           make install
 
-- hosts: server
-  gather_facts: false
-  become: true
-  tasks:
     - name: mkdir certs
       file:
         path: "{{ home_dir }}/quic"
@@ -141,6 +115,11 @@
     - name: daemon reload
       systemd:
         daemon_reload: true
+
+    - name: stop caddy
+      systemd:
+        name: caddy.service
+        state: stopped
 
     - name: restart nginx
       systemd:

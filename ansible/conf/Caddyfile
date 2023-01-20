@@ -7,6 +7,6 @@
 
 quic.totto.page {
 	tls {$HOME}/certs/quic.totto.page/fullchain.pem {$HOME}/certs/quic.totto.page/privkey.pem
-	root * {$HOME}/dotfiles/static/quic/html/
+	root * {$HOME}/puppeteer-http-protocol-tester/ansible/conf/html/
 	file_server
 }

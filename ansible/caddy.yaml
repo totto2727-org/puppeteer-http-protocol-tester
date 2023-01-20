@@ -1,0 +1,83 @@
+- hosts: server
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Clone repository
+      git:
+        repo: git@github.com:totto2727-org/puppeteer-http-protocol-tester.git
+        dest: "{{ home_dir }}/puppeteer-http-protocol-tester"
+        clone: true
+        update: true
+
+    - name: install packages
+      apt:
+        state: latest
+        update_cache: true
+        name:
+          - sysstat
+
+    - name: mkdir quic
+      file:
+        path: "{{ home_dir }}/quic"
+        owner: totto2727
+        group: totto2727
+        mode: u=rwX,g=rX,o=rX
+        recurse: yes
+        state: directory
+
+    - name: clone caddy
+      git:
+        repo: https://github.com/caddyserver/caddy
+        dest: "{{ home_dir }}/quic/caddy"
+        update: true
+        force: true
+
+    - name: build caddy
+      shell:
+        chdir: "{{ home_dir }}/quic/nginx-quic"
+        cmd: |
+          go build
+          sudo setcap cap_net_bind_service=+ep ~/caddy/cmd/caddy/caddy
+
+    - name: mkdir certs
+      file:
+        path: "{{ home_dir }}/quic"
+        owner: totto2727
+        group: totto2727
+        mode: u=rwX,g=rX,o=rX
+        recurse: yes
+        state: directory
+
+    - name: copy certs
+      synchronize:
+        src: ~/certs/
+        dest: "{{ home_dir }}/certs/"
+        owner: false
+        group: false
+
+    - name: link quic
+      file:        
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        state: link
+        force: true
+      loop:
+        - dest: "{{ home_dir }}/.local/bin/caddy"
+          src: "{{ home_dir }}/caddy/cmd/caddy/caddy"
+        - dest: /lib/systemd/system/caddy.service
+          src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/caddy.service"
+
+    - name: daemon reload
+      systemd:
+        daemon_reload: true
+
+    - name: stop nginx
+      systemd:
+        name: qnginx.service
+        state: stopped
+
+    - name: restart caddy
+      systemd:
+        name: caddy.service
+        state: restarted
+        enabled: true
