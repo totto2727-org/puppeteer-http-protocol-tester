@@ -1,6 +1,5 @@
 - hosts: server
   gather_facts: false
-  become: true
   tasks:
     - name: Clone repository
       git:
@@ -9,6 +8,10 @@
         clone: true
         update: true
 
+- hosts: server
+  gather_facts: false
+  become: true
+  tasks:
     - name: install packages
       apt:
         state: latest

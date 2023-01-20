@@ -1,6 +1,5 @@
 - hosts: client
   gather_facts: false
-  become: true
   tasks:
     - name: Clone repository
       git:
@@ -9,22 +8,26 @@
         clone: true
         update: true
 
+- hosts: client
+  gather_facts: false
+  become: true
+  tasks:
     - name: Install apt-transport-https
-      ansible.builtin.apt:
+      apt:
         state: latest
         update_cache: true
     - name: Add Apt signing key
-      ansible.builtin.apt_key:
+      apt_key:
         url: "https://dl.google.com/linux/linux_signing_key.pub"
         state: present
     - name: Add repository into sources list
-      ansible.builtin.apt_repository:
+      apt_repository:
         repo: deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
         state: present
         filename: google-chrome
 
     - name: install package
-      ansible.builtin.apt:
+      apt:
         name: 
           - google-chrome-stable
           - sysstat

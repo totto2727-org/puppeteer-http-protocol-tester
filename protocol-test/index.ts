@@ -22,7 +22,7 @@ const LOG_DIR = path.isAbsolute(LOG_DIR_)
   : path.resolve(path.join("..", LOG_DIR_));
 console.info(LOG_DIR);
 
-const url = "https://" + BASE_DOMAIN + "+" + PATH;
+const url = "https://" + BASE_DOMAIN + "/" + PATH;
 console.info(url);
 
 await runTests();

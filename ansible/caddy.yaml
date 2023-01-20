@@ -1,6 +1,5 @@
 - hosts: server
   gather_facts: false
-  become: true
   tasks:
     - name: Clone repository
       git:
@@ -9,6 +8,10 @@
         clone: true
         update: true
 
+- hosts: server
+  gather_facts: false
+  become: true
+  tasks:
     - name: install packages
       apt:
         state: latest
@@ -16,6 +19,9 @@
         name:
           - sysstat
 
+- hosts: server
+  gather_facts: false
+  tasks:
     - name: mkdir quic
       file:
         path: "{{ home_dir }}/quic"
@@ -34,14 +40,12 @@
 
     - name: build caddy
       shell:
-        chdir: "{{ home_dir }}/quic/nginx-quic"
-        cmd: |
-          go build
-          sudo setcap cap_net_bind_service=+ep ~/caddy/cmd/caddy/caddy
+        chdir: "{{ home_dir }}/quic/caddy/cmd/caddy/"
+        cmd: bash -lc "go build"
 
     - name: mkdir certs
       file:
-        path: "{{ home_dir }}/quic"
+        path: "{{ home_dir }}/certs"
         owner: totto2727
         group: totto2727
         mode: u=rwX,g=rX,o=rX
@@ -52,9 +56,24 @@
       synchronize:
         src: ~/certs/
         dest: "{{ home_dir }}/certs/"
-        owner: false
-        group: false
 
+- hosts: server
+  gather_facts: false
+  become: true
+  tasks:
+    - name: setcap caddy
+      shell:
+        chdir: "{{ home_dir }}/quic/nginx-quic"
+        cmd: sudo setcap cap_net_bind_service=+ep {{ home_dir }}/quic/caddy/cmd/caddy/caddy
+
+    - name: mkdir .local
+      file:
+        path: "{{ home_dir }}/.local/bin"
+        owner: totto2727
+        group: totto2727
+        mode: u=rwX,g=rX,o=rX
+        recurse: yes
+        state: directory
     - name: link quic
       file:        
         src: "{{ item.src }}"
@@ -63,7 +82,7 @@
         force: true
       loop:
         - dest: "{{ home_dir }}/.local/bin/caddy"
-          src: "{{ home_dir }}/caddy/cmd/caddy/caddy"
+          src: "{{ home_dir }}/quic/caddy/cmd/caddy/caddy"
         - dest: /lib/systemd/system/caddy.service
           src: "{{ home_dir }}/puppeteer-http-protocol-tester/ansible/conf/caddy.service"
 
