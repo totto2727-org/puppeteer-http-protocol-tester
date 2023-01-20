@@ -1,7 +1,7 @@
 {
 	auto_https off
 	servers {
-		protocols h2 h3
+		protocols h1 h2 h3
 	}
 }
 
