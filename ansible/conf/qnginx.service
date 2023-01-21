@@ -12,6 +12,7 @@ ExecStart=/home/totto2727/quic/nginx-quic/build/sbin/nginx
 ExecReload=/home/totto2727/quic/nginx-quic/build/sbin/nginx -s reload
 ExecStop=/bin/kill -s QUIT $MAINPID
 PrivateTmp=true
+LimitNOFILE=1048576
 
 [Install]
 WantedBy=multi-user.target
