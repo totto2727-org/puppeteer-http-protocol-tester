@@ -7,6 +7,7 @@
         dest: "{{ home_dir }}/puppeteer-http-protocol-tester"
         clone: true
         update: true
+        force: true
 
 - hosts: client
   gather_facts: false
