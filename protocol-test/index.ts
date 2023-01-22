@@ -56,16 +56,13 @@ async function runTests(): Promise<void> {
         args.push("--enable-quic");
         args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
       }
-      console.info(args);
+      await wg.wait(MAX_CONCURRENT);
 
       wg.add();
 
-      await wg.wait(MAX_CONCURRENT);
       console.log(wg.getWaitNumber(), n);
 
-      runTest(LOG_DIR, protocol, n, args);
-
-      wg.done();
+      runTest(wg, LOG_DIR, protocol, n, args);
     }
 
     await wg.wait();
@@ -75,6 +72,7 @@ async function runTests(): Promise<void> {
 }
 
 async function runTest(
+  wg: WaitGroup,
   logDir: string,
   protocol: string,
   n: number,
@@ -88,6 +86,7 @@ async function runTest(
   const { har, performances } = await newPage(browser, n);
 
   await browser.close();
+  wg.done();
 
   await fs.writeFile(
     `${logDir}/${protocol}-har/${n}.json`,
@@ -101,9 +100,6 @@ async function runTest(
 
 async function newPage(browser: Browser, n: number) {
   const page = await browser.newPage();
-
-  await sleep(1000);
-
   const client = await page.target().createCDPSession();
   await client.send("Network.emulateNetworkConditions", {
     offline: false,
@@ -111,6 +107,8 @@ async function newPage(browser: Browser, n: number) {
     downloadThroughput: 10 * 1024 * 1024 / 8,
     uploadThroughput: 10 * 1024 * 1024 / 8,
   });
+
+  await sleep(1000);
 
   const getHar = new PuppeteerHar(page);
   await getHar.start();
