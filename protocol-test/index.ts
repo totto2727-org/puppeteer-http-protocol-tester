@@ -31,58 +31,64 @@ async function runTests(): Promise<void> {
   for (const protocol of HTTP_PROTOCOLS) {
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-har`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
 
-    const args = [
-      "--disable-setuid-sandbox",
-      "--log-net-log=" + `${LOG_DIR}/${protocol}-netlog.json`,
-      "--net-log-capture-mode=Everything",
-    ];
-
-    if (protocol === "h3") {
-      args.push("--enable-quic");
-      args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
-    }
-    console.info(args);
-
-    const browser = await puppeteer.launch({
-      executablePath: CHROMIUM_PATH,
-      args,
-    });
-    console.log("launched brouser");
+    try {
+      await fs.rm(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
+    } catch {}
+    await fs.mkdir(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
 
     const wg = new WaitGroup({ waitIntervalMilli: DELAY });
 
     for (const n of [...Array(REQUEST_TIMES).keys()]) {
-      await wg.wait(MAX_CONCURRENT);
+      const args = [
+        "--disable-setuid-sandbox",
+        "--log-net-log=" + `${LOG_DIR}/${protocol}-netlog/${n}.json`,
+        "--net-log-capture-mode=Everything",
+      ];
+      if (protocol === "h3") {
+        args.push("--enable-quic");
+        args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
+      }
+      console.info(args);
+
       wg.add();
+
+      await wg.wait(MAX_CONCURRENT);
       console.log(wg.getWaitNumber(), n);
-      runTest(wg, browser, LOG_DIR, protocol, n);
+
+      runTest(LOG_DIR, protocol, n, args);
+
+      wg.done();
     }
 
     await wg.wait();
-
-    await browser.close();
 
     await sleep(TEST_INTERVAL);
   }
 }
 
 async function runTest(
-  wg: WaitGroup,
-  browser: Browser,
   logDir: string,
   protocol: string,
   n: number,
+  args: string[],
 ) {
+  const browser = await puppeteer.launch({
+    executablePath: CHROMIUM_PATH,
+    args,
+  });
+
   const { har, performances } = await newPage(browser, n);
-  wg.done();
+
+  await browser.close();
+
   await fs.writeFile(
     `${logDir}/${protocol}-har/${n}.json`,
     JSON.stringify({ number: n, har }),
@@ -94,10 +100,9 @@ async function runTest(
 }
 
 async function newPage(browser: Browser, n: number) {
-  const context = await browser.createIncognitoBrowserContext();
-  const page = await context.newPage();
-  page.setDefaultNavigationTimeout(TIMEOUT);
-  page.setDefaultTimeout(TIMEOUT);
+  const page = await browser.newPage();
+
+  await sleep(1000);
 
   const client = await page.target().createCDPSession();
   await client.send("Network.emulateNetworkConditions", {

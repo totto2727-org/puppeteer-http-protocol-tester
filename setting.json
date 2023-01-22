@@ -1,7 +1,7 @@
 {
   "env": {
-    "BASE_DOMAIN": "site.totto.page",
-    "PATH": "",
+    "BASE_DOMAIN": "quic.totto.page",
+    "PATH": "single.html",
     "CHROMIUM_PATH": "/usr/bin/google-chrome",
     "LOG_DIR": "./log"
   },
@@ -10,7 +10,7 @@
       "h2",
       "h3"
     ],
-    "TIMEOUT": 10000,
+    "TIMEOUT": 30000,
     "DELAY": 10,
     "TEST_INTERVAL": 600000,
     "REQUEST_TIMES": 1000,
