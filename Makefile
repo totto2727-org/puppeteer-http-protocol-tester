@@ -12,7 +12,7 @@ test:
 
 preprocessing: mkdir-log
 	#rsync -av -z -P –-exclude '*netlog.json' bws03:${SSH_BASE_DIR}/$$(basename ${LOG_DIR})/ ${LOG_DIR}
-	rsync -av -z -P --delete --exclude '*netlog.json' minis1:~/puppeteer-http-protocol-tester/log/ log
+	rsync -av -z -P --delete --exclude '*netlog*' minis1:~/puppeteer-http-protocol-tester/log/ log
 	# -scp ubnt:~/log/ubnt.csv ${LOG_DIR}
 
 	find ${LOG_DIR}/h2-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h2-har.json
@@ -35,9 +35,16 @@ stat-chrome: mkdir-log
 	ssh minis1 pidstat -h -H -C chrome 1 | tee ${LOG_DIR}/chrome.pidstat
 
 stat-nginx-minis2: mkdir-log
-	ssh minis2 pidstat -h -H -C nginx 1 | tee ${LOG_DIR}/nginx-bws03.pidstat
+	ssh minis2 pidstat -h -H -C nginx 1 | tee ${LOG_DIR}/nginx-minis2.pidstat
+
+stat-nginx-nuc1: mkdir-log
+	ssh nuc1 pidstat -h -H -C nginx 1 | tee ${LOG_DIR}/nginx-nuc1.pidstat
+	
+stat-nginx-nuc2: mkdir-log
+	ssh nuc2 pidstat -h -H -C nginx 1 | tee ${LOG_DIR}/nginx-nuc2.pidstat
 
 scp-ubnt:
 	scp stat/watch-stat.sh stat/stat-conntrack.sh ubnt:~/
+
 stat-ubnt: scp-ubnt
 	TERM=xterm-color ssh -t ubnt sh watch-stat.sh

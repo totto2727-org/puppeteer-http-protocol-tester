@@ -1,7 +1,7 @@
 {
   "env": {
     "BASE_DOMAIN": "quic.totto.page",
-    "PATH": "single.html",
+    "PATH": "multi.html",
     "CHROMIUM_PATH": "/usr/bin/google-chrome",
     "LOG_DIR": "./log"
   },
@@ -10,10 +10,12 @@
       "h2",
       "h3"
     ],
-    "TIMEOUT": 30000,
+    "TIMEOUT": 10000,
     "DELAY": 10,
+    "LAUNCH_DELAY":1000,
     "TEST_INTERVAL": 600000,
     "REQUEST_TIMES": 1000,
-    "MAX_CONCURRENT": 1
+    "MAX_CONCURRENT": 50,
+    "REUSE": true
   }
 }
