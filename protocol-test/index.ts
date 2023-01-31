@@ -6,19 +6,22 @@ import * as path from "path";
 import setting from "../setting.json" assert { type: "json" };
 import { sleep, WaitGroup } from "./src/WaitGroup.js";
 
+// 設定値
 const { env, test } = setting;
 const { BASE_DOMAIN, PATH, CHROMIUM_PATH, LOG_DIR: LOG_DIR_ } = env;
 const {
   DELAY,
   TEST_INTERVAL,
   HTTP_PROTOCOLS,
-  MAX_CONCURRENT,
+  MAX_CONCURRENT_PER_SESSION,
   REQUEST_TIMES,
   TIMEOUT,
   REUSE,
   LAUNCH_DELAY,
+  BROWSER_SESSIONS,
 } = test;
 
+// ログのパスの算出
 const LOG_DIR = path.isAbsolute(LOG_DIR_)
   ? LOG_DIR_
   : path.resolve(path.join("..", LOG_DIR_));
@@ -27,43 +30,53 @@ console.info(LOG_DIR);
 const url = "https://" + BASE_DOMAIN + "/" + PATH;
 console.info(url);
 
+// テストの実行
 await runTests();
 
 async function runTests(): Promise<void> {
+  // プロトコルごとの実行
   for (const protocol of HTTP_PROTOCOLS) {
+    console.log(`${protocol} start`);
+
+    // ログディレクトリの初期化
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-har`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
 
     const wg = new WaitGroup({ waitIntervalMilli: DELAY });
 
-    const args = [
-      "--disable-setuid-sandbox",
-      "--net-log-capture-mode=Everything",
-    ];
-    if (protocol === "h3") {
-      args.push("--enable-quic");
-      args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
-    }
+    const browsers: Browser[] = [];
+    if (REUSE) {
+      for (const n of [...Array(BROWSER_SESSIONS).keys()]) {
+        const args = [
+          "--disable-setuid-sandbox",
+          "--log-net-log=" + `${LOG_DIR}/${protocol}-${n}-netlog.json`,
+          "--net-log-capture-mode=Everything",
+          "--disable-gpu",
+        ];
+        if (protocol === "h3") {
+          args.push("--enable-quic");
+          args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
+        }
 
-    const browser = REUSE
-      ? await puppeteer.launch({
-        executablePath: CHROMIUM_PATH,
-        args,
-      })
-      : undefined;
-    REUSE && await sleep(LAUNCH_DELAY);
+        const browser = await puppeteer.launch({
+          executablePath: CHROMIUM_PATH,
+          args,
+        });
+        browsers.push(browser);
+        await sleep(LAUNCH_DELAY);
+    }
 
     for (const n of [...Array(REQUEST_TIMES).keys()]) {
       const args = [
@@ -76,45 +89,54 @@ async function runTests(): Promise<void> {
         args.push("--enable-quic");
         args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
       }
-      await wg.wait(MAX_CONCURRENT);
+
+      await wg.wait(MAX_CONCURRENT_PER_SESSION);
 
       wg.add();
-
       console.log(wg.getWaitNumber(), n);
+
+      const browser = REUSE
+        ? browsers[n % BROWSER_SESSIONS]
+        : await puppeteer.launch({
+          executablePath: CHROMIUM_PATH,
+          args,
+        });
+      REUSE || await sleep(LAUNCH_DELAY);
 
       runTest(
         wg,
+        browser,
+        !REUSE,
         LOG_DIR,
         protocol,
         n,
-        args,
-        browser,
       );
     }
 
     await wg.wait();
 
-    REUSE && browser && await browser.close();
+    if (REUSE) {
+      for (const browser of browsers) {
+        browser.close();
+      }
+    }
     await sleep(TEST_INTERVAL);
+
+    console.info(`${protocol} finish`);
   }
 }
 
 async function runTest(
   wg: WaitGroup,
+  browser: Browser,
+  isClose: boolean,
   logDir: string,
   protocol: string,
   n: number,
-  args: string[],
-  browser_?: Browser,
 ) {
-  const browser = browser_ || await puppeteer.launch({
-    executablePath: CHROMIUM_PATH,
-    args,
-  });
-
   const { har, performances } = await newPage(browser, n);
 
-  REUSE || await browser.close();
+  isClose && await browser.close();
   wg.done();
 
   await fs.writeFile(
