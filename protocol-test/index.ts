@@ -13,7 +13,7 @@ const {
   DELAY,
   TEST_INTERVAL,
   HTTP_PROTOCOLS,
-  MAX_CONCURRENT_PER_SESSION,
+  MAX_CONCURRENT,
   REQUEST_TIMES,
   TIMEOUT,
   REUSE,
@@ -56,19 +56,27 @@ async function runTests(): Promise<void> {
 
     const wg = new WaitGroup({ waitIntervalMilli: DELAY });
 
+    const args_base = [
+      "--disable-setuid-sandbox",
+      "--net-log-capture-mode=Everything",
+      "--disable-gpu",
+    ];
+    if (protocol === "h3") {
+      args_base.push("--enable-quic");
+      args_base.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
+    }
+
+    /*
+     * REUSEが真の時事前に生成したブラウザセッションを利用する(並列実行数はブラウザで等分)
+     * REUSEが偽の時並列数までブラウザを同時に起動する
+     */
     const browsers: Browser[] = [];
     if (REUSE) {
       for (const n of [...Array(BROWSER_SESSIONS).keys()]) {
         const args = [
-          "--disable-setuid-sandbox",
+          ...args_base,
           "--log-net-log=" + `${LOG_DIR}/${protocol}-${n}-netlog.json`,
-          "--net-log-capture-mode=Everything",
-          "--disable-gpu",
         ];
-        if (protocol === "h3") {
-          args.push("--enable-quic");
-          args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
-        }
 
         const browser = await puppeteer.launch({
           executablePath: CHROMIUM_PATH,
@@ -76,25 +84,23 @@ async function runTests(): Promise<void> {
         });
         browsers.push(browser);
         await sleep(LAUNCH_DELAY);
+      }
     }
 
+    // 目標回数まで計測
     for (const n of [...Array(REQUEST_TIMES).keys()]) {
-      const args = [
-        "--disable-setuid-sandbox",
-        "--log-net-log=" + `${LOG_DIR}/${protocol}-netlog/${n}.json`,
-        "--net-log-capture-mode=Everything",
-        "--disable-gpu",
-      ];
-      if (protocol === "h3") {
-        args.push("--enable-quic");
-        args.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
-      }
+      // 並列数を監視して待機
+      await wg.wait(MAX_CONCURRENT);
 
-      await wg.wait(MAX_CONCURRENT_PER_SESSION);
-
+      // 実行前に並列数の加算
       wg.add();
       console.log(wg.getWaitNumber(), n);
 
+      const args = [
+        ...args_base,
+        "--log-net-log=" + `${LOG_DIR}/${protocol}-netlog/${n}.json`,
+      ];
+      // 再利用しないならば生成
       const browser = REUSE
         ? browsers[n % BROWSER_SESSIONS]
         : await puppeteer.launch({
@@ -111,34 +117,41 @@ async function runTests(): Promise<void> {
         protocol,
         n,
       );
+      // 1プロトコルのテスト終了
     }
 
+    // 全て完了するまで待機
     await wg.wait();
 
+    // 起動しているブラウザの終了
     if (REUSE) {
       for (const browser of browsers) {
         browser.close();
       }
     }
-    await sleep(TEST_INTERVAL);
 
     console.info(`${protocol} finish`);
+    // プロトコル間の待機時間
+    await sleep(TEST_INTERVAL);
   }
 }
 
 async function runTest(
   wg: WaitGroup,
   browser: Browser,
-  isClose: boolean,
+  isBrowserReuse: boolean,
   logDir: string,
   protocol: string,
   n: number,
 ) {
   const { har, performances } = await newPage(browser, n);
 
-  isClose && await browser.close();
+  isBrowserReuse || await browser.close();
+
+  // 並列数の削減
   wg.done();
 
+  // 結果の書き込み
   await fs.writeFile(
     `${logDir}/${protocol}-har/${n}.json`,
     JSON.stringify({ number: n, har }),
@@ -150,28 +163,36 @@ async function runTest(
 }
 
 async function newPage(browser: Browser, n: number) {
+  // プライベートなセッションの作成
   const context = await browser.createIncognitoBrowserContext();
+
+  // 新規タブの生成
   const page = await context.newPage();
+
+  // Dev Toolsの起動
   const client = await page.target().createCDPSession();
+  // 通信速度の制限
   await client.send("Network.emulateNetworkConditions", {
     offline: false,
-    latency: 20,
-    downloadThroughput: 10 * 1024 * 1024 / 8,
-    uploadThroughput: 10 * 1024 * 1024 / 8,
+    latency: 20, // 20ms
+    downloadThroughput: 10 * 1024 * 1024 / 8, // 10Mbps
+    uploadThroughput: 10 * 1024 * 1024 / 8, // 10Mbps
   });
 
+  // harファイルの設定
   const getHar = new PuppeteerHar(page);
   await getHar.start();
 
+  // ページ遷移
   try {
     await page.goto(url, { waitUntil: "load", timeout: TIMEOUT });
   } catch (e) {
     console.error(`${n} ${JSON.stringify(e)}`);
   }
 
+  // パフォーマンスAPIの実行
   const performances = JSON.parse(
     await page.evaluate(() =>
-      //@ts-ignore
       JSON.stringify({
         start: performance.timeOrigin,
         entries: performance.getEntriesByType("navigation").concat(
@@ -183,6 +204,7 @@ async function newPage(browser: Browser, n: number) {
 
   const har = await getHar.stop();
 
+  // セッションの終了(メモリリークの原因となるため必須)
   await page.close();
   await context.close();
 

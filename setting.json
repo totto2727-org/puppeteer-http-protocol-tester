@@ -11,12 +11,12 @@
       "h3"
     ],
     "TIMEOUT": 10000,
-    "TEST_INTERVAL": 1000,
+    "TEST_INTERVAL": 600000,
     "DELAY": 10,
     "LAUNCH_DELAY": 1000,
     "REQUEST_TIMES": 1000,
-    "REUSE": true,
-    "BROWSER_SESSIONS": 3,
-    "MAX_CONCURRENT_PER_SESSION": 3
+    "REUSE": false,
+    "BROWSER_SESSIONS": 1,
+    "MAX_CONCURRENT": 1
   }
 }
