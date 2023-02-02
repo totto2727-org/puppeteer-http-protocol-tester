@@ -41,29 +41,31 @@ async function runTests(): Promise<void> {
     // ログディレクトリの初期化
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-har`, { recursive: true });
-    } catch {}
+    } catch { }
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
-    } catch {}
+    } catch { }
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
-    } catch {}
+    } catch { }
     await fs.mkdir(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
 
     const wg = new WaitGroup({ waitIntervalMilli: DELAY });
 
     const args_base = [
       "--disable-setuid-sandbox",
-      "--net-log-capture-mode=Everything",
       "--disable-gpu",
     ];
     if (protocol === "h3") {
       args_base.push("--enable-quic");
       args_base.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
+    }
+    if (REUSE) {
+      args_base.push("--net-log-capture-mode=Everything");
     }
 
     /*
@@ -72,10 +74,9 @@ async function runTests(): Promise<void> {
      */
     const browsers: Browser[] = [];
     if (REUSE) {
-      for (const n of [...Array(BROWSER_SESSIONS).keys()]) {
+      for (const _ of [...Array(BROWSER_SESSIONS).keys()]) {
         const args = [
           ...args_base,
-          "--log-net-log=" + `${LOG_DIR}/${protocol}-${n}-netlog.json`,
         ];
 
         const browser = await puppeteer.launch({
