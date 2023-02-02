@@ -107,12 +107,14 @@ async function runTests(): Promise<void> {
           executablePath: CHROMIUM_PATH,
           args,
         });
-      REUSE || await sleep(LAUNCH_DELAY);
+      if (!REUSE) {
+        await sleep(LAUNCH_DELAY);
+      }
 
       runTest(
         wg,
         browser,
-        !REUSE,
+        REUSE,
         LOG_DIR,
         protocol,
         n,
@@ -146,7 +148,9 @@ async function runTest(
 ) {
   const { har, performances } = await newPage(browser, n);
 
-  isBrowserReuse || await browser.close();
+  if (!isBrowserReuse) {
+    await browser.close();
+  }
 
   // 並列数の削減
   wg.done();
