@@ -19,6 +19,7 @@ const {
   REUSE,
   LAUNCH_DELAY,
   BROWSER_SESSIONS,
+  NETLOG,
 } = test;
 
 // ログのパスの算出
@@ -41,17 +42,17 @@ async function runTests(): Promise<void> {
     // ログディレクトリの初期化
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-har`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-har`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-performances`, { recursive: true });
 
     try {
       await fs.rm(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
-    } catch { }
+    } catch {}
     await fs.mkdir(`${LOG_DIR}/${protocol}-netlog`, { recursive: true });
 
     const wg = new WaitGroup({ waitIntervalMilli: DELAY });
@@ -64,7 +65,7 @@ async function runTests(): Promise<void> {
       args_base.push("--enable-quic");
       args_base.push("--origin-to-force-quic-on=" + BASE_DOMAIN + ":443");
     }
-    if (REUSE) {
+    if (NETLOG) {
       args_base.push("--net-log-capture-mode=Everything");
     }
 
@@ -99,8 +100,12 @@ async function runTests(): Promise<void> {
 
       const args = [
         ...args_base,
-        "--log-net-log=" + `${LOG_DIR}/${protocol}-netlog/${n}.json`,
       ];
+      if (NETLOG) {
+        args.push(
+          "--log-net-log=" + `${LOG_DIR}/${protocol}-netlog/${n}.json`,
+        );
+      }
       // 再利用しないならば生成
       const browser = REUSE
         ? browsers[n % BROWSER_SESSIONS]
