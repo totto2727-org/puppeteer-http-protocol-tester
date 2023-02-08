@@ -11,12 +11,12 @@ test:
 	ssh -t minis1 "cd ${SSH_BASE_DIR}/protocol-test && bash --login -c 'npm i && npm start'"
 
 preprocessing: mkdir-log
-	rsync -av -z -P --delete --exclude '*netlog*' minis1:~/puppeteer-http-protocol-tester/log/ log
-	find ${LOG_DIR}/h2-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h2-har.json
-	find ${LOG_DIR}/h3-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h3-har.json
-	find ${LOG_DIR}/h2-performances -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h2-performances.json
-	find ${LOG_DIR}/h3-performances -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h3-performances.json
-	deno run --allow-read --allow-write process/preprocess.ts
+	# rsync -av -z -P --delete --exclude '*netlog*' minis1:~/puppeteer-http-protocol-tester/log/ log
+	# find ${LOG_DIR}/h2-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h2-har.json
+	# find ${LOG_DIR}/h3-har -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h3-har.json
+	# find ${LOG_DIR}/h2-performances -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h2-performances.json
+	# find ${LOG_DIR}/h3-performances -type f | xargs cat | jq -s '. | sort_by(.number)' > ${LOG_DIR}/h3-performances.json
+	# deno run --allow-read --allow-write process/preprocess.ts
 	
 	# echo "Time,UID,PID,%usr,%system,%guest,%wait,%CPU,CPU,Command" > ${LOG_DIR}/nginx-minis2.csv
 	# cat ${LOG_DIR}/nginx-minis2.pidstat | sed "/0.00    0.00    0.00    0.00    0.00/d" | sd '^Linux.*$$' '' | sd '^#.*$$' '' | sd '^\n' '' | sd ' +' ',' >> ${LOG_DIR}/nginx-minis2.csv
